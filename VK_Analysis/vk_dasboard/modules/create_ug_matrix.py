@@ -10,38 +10,25 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 import pandas as pd
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix   # разреженная матрица
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True) # гарантирует что матрица не поменяетс, кешируемость
 class UserCommunityData:
-    """
-    Единый контейнер данных для построения графа схожести и анализа.
 
-    csr           : sparse матрица (n_users × n_communities), значения 0/1
-    user_ids      : список user_id (строки) в порядке строк матрицы
-    community_ids : список community_id (строки) в порядке столбцов матрицы
-    user_index    : dict user_id -> row_index
-    comm_index    : dict community_id -> col_index
-    edges_df      : исходный edge-list (user_id, community_id)
-    """
-    csr: csr_matrix
-    user_ids: List[str]
-    community_ids: List[str]
-    user_index: Dict[str, int]
-    comm_index: Dict[str, int]
-    edges_df: pd.DataFrame
+    csr: csr_matrix # матрица (n_users × n_communities), значения 0/1
+    user_ids: List[str]# порядок строк
+    community_ids: List[str]# порядок столбцов
+    user_index: Dict[str, int]#
+    comm_index: Dict[str, int]#
+    edges_df: pd.DataFrame#
 
     @classmethod
     def from_edges_df(cls, edges_df: pd.DataFrame) -> UserCommunityData:
         """
         Строит разреженную матрицу user × community из edge-list таблицы.
 
-        Вход:
-          edges_df: DataFrame с колонками ['user_id', 'community_id'] (строки)
 
-        Выход:
-          UserCommunityData(csr, user_ids, community_ids, user_index, comm_index, edges_df)
         """
 
         if "user_id" not in edges_df.columns or "community_id" not in edges_df.columns:

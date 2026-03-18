@@ -206,25 +206,30 @@ def analyze_hidden_communities(G: nx.Graph, partition: Dict[str, int],user_to_gr
         top_topics = _top_topics_inside_cluster(user_to_groups, users, topic_map, top_n=5)
         top_topics_str = ", ".join([f"{t} ({c})" for t, c in top_topics]) if top_topics else "нет данных"
 
-        cluster_info[cid] = {
-            **met,
-            "top_groups": top_groups,
-            "top_groups_str": top_groups_str,
-            "top_topics": top_topics,
-            "top_topics_str": top_topics_str,
+        cluster_info[cid] = { # # Создаем словарь для текущего кластера (hidden community)
+            **met, # Распаковываем метрики подграфа (size, density, score
+            "top_groups": top_groups, #Сохраняем сырые данные ТОП-5 групп
+            "top_groups_str": top_groups_str,#
+            "top_topics": top_topics,#
+            "top_topics_str": top_topics_str,#
         }
 
-        summary_rows.append({
+        summary_rows.append({     # Добавляем строку в таблицу ТОП-сообществ (список словарей)
             "hidden_comm_id": cid,
-            "size_users": met["size"],
-            "density": round(met["density"], 4),
-            "avg_wdeg": round(met["avg_internal_weighted_degree"], 4),
-            "score": round(met["significance_score"], 6),
-            "top_topics": top_topics_str,
-            "обобщающий_признак": top_groups_str.replace("<br>", "; "),
+            "size_users": met["size"], # Количество пользователей в сообществе
+            "density": round(met["density"], 4), #Плотность связей (0.0-1.0) округляю до 4 знаков полсе запятой
+            "avg_wdeg": round(met["avg_internal_weighted_degree"], 4), # Средняя.взв.степень внутри кластера
+            "score": round(met["significance_score"], 6), # ГЛАВНАЯ метрика значимости density × avg_wdeg × log(размер+1)
+            "top_topics": top_topics_str, # ТОП-5 тематик
+            "обобщающий_признак": top_groups_str.replace("<br>", "; "), # Преобразует HTML
         })
 
+
+    # сортировка списка словарей по значимости
     summary_rows.sort(key=lambda x: x["score"], reverse=True)
+
+
+
     return summary_rows, cluster_info
 
 
@@ -245,7 +250,8 @@ def visualize_network_advanced(
 
     """
 
-    if G.number_of_edges() == 0:
+    if G.number_of_edges() == 0: # если ребер нет - граф пустой выкину исключение
+        print("ERRRR")
         raise ValueError(
             "Граф получился без рёбер.\n"
             "Проверьте параметры build_similarity_graph:\n"
@@ -257,8 +263,13 @@ def visualize_network_advanced(
     # Тематики и имена сообществ
     topic_map, name_map = load_topics_maps(topics_csv_path)
 
-    # Louvain
+    # Лувенкский алгоритм
     partition = community_louvain.best_partition(G, weight="weight")
+
+    # Модулярность - функционал качетсва разбиения графа на сообщества
+
+
+
     modularity = community_louvain.modularity(partition, G, weight="weight")
 
     # user_id -> list[community_id]
@@ -318,7 +329,7 @@ def visualize_network_advanced(
 
     fig.add_trace(go.Scatter(
         x=edge_x, y=edge_y,
-        mode="lines",
+        mode="lines",  #ребра
         line=dict(width=1, color="rgba(0,255,130,0.18)"),
         hoverinfo="none",
         showlegend=False
